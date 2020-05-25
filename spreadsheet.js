@@ -1,16 +1,17 @@
 const GoogleSpreadsheet = require('google-spreadsheet');
 const { promisify } = require('util');
 const nodemailer = require('nodemailer');
+const schedule = require('node-schedule');
 
 const creds = require('./client_secret.json');
 
 async function accessSpreadsheet() {
 
-	// // actual sign up sheet
-	// const doc = new GoogleSpreadsheet('1XLcU1dGu9d34gDDG9wXJ7EcskJfdhyioqzoJCSvWY2g');
+	// actual sign up sheet
+	const doc = new GoogleSpreadsheet('1XLcU1dGu9d34gDDG9wXJ7EcskJfdhyioqzoJCSvWY2g');
 
-	// practice sign up sheet
-	const doc = new GoogleSpreadsheet('1K-KIbHwlHGcnfgqZvyX7FZdNM85cVK5AATm7aPG9Bi4');
+	// // practice sign up sheet
+	// const doc = new GoogleSpreadsheet('1K-KIbHwlHGcnfgqZvyX7FZdNM85cVK5AATm7aPG9Bi4');
 
 	await promisify(doc.useServiceAccountAuth)(creds);
 	const info = await promisify(doc.getInfo)();
@@ -62,15 +63,11 @@ function email(time, date){
             auth: { user: 'noreply.skypal@gmail.com', pass: 'SkyPal*0*' }
         });
 
-    var subjects = 'BUS 360W session booked for ' + time.value;
-    console.log(subjects);
-
     var mailOptions = {
         from: 'noreply.skypal@gmail.com',
         to: emailAddr,
-        subject: subjects.toString(),
+        subject: 'BUS 360W session booked for ' + time.value,
         text: 'Hello,\n\nYou have signed up for office hours for BUS 360W at ' + time.value + ' on ' + date.value + '.\n\nRegards, \n\nGoogle Spreadsheet Signup Bot',
-        //html: 'Hello, <br><br> You have signed up for office hours for BUS 360W. <br><br>Regards, <br><br> Google Spreadsheet Signup Bot'
     };
 
     transporter.sendMail(mailOptions, function (error, info) {
@@ -84,4 +81,13 @@ function email(time, date){
 // add functionality to find the longest available time after your slot in case your meeting runs long
 // add html and CSS to create an interactive software
 // send discord notifications or telegram messages what time you were booked for, messenger
-accessSpreadsheet();
+async function loopSpreadsheet() {
+	var flag = true;
+	while(flag)
+	{
+		accessSpreadsheet();
+		await new Promise(resolve => setTimeout(resolve, 300000));
+	}
+}
+
+loopSpreadsheet();
